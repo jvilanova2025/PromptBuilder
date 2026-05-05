@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 240px 1fr 260px;
+            height: calc(100vh - 40px);
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 14px;
+            margin-bottom: 14px;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .template-item {
+            margin-bottom: 6px;
+        }
+
+        .template-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .template-btn {
+            flex: 1;
+            padding: 10px 12px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 12px;
+            color: #495057;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .template-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateX(2px);
+        }
+
+        .template-btn.active {
+            border-width: 3px;
+            border-color: #667eea;
+        }
+
+        .expand-arrow {
+            font-size: 10px;
+            transition: transform 0.2s;
+            color: #6c757d;
+        }
+
+        .expand-arrow.expanded {
+            transform: rotate(90deg);
+        }
+
+        .example-list {
+            display: none;
+            margin-left: 16px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+
+        .example-list.visible {
+            display: block;
+        }
+
+        .example-btn {
+            width: 100%;
+            padding: 8px 10px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 11px;
+            color: #6c757d;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .example-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            color: #495057;
+        }
+
+        .example-btn.active {
+            border-color: #667eea;
+            background: #e3f2fd;
+            color: #667eea;
+        }
+
+        .help-icon {
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .help-icon:hover {
+            background: #5568d3;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .main-editor {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+			overflow: hidden;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #5568d3;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+			position: relative;
+        }
+
+        .editor-header {
+            background: #f8f9fa;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .char-count {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .instruction-panel {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            padding: 12px 14px;
+            border-bottom: 1px solid #bbdefb;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .instruction-panel:hover {
+            background: #bbdefb;
+        }
+
+        .instruction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .instruction-toggle {
+            font-size: 10px;
+            color: #6c757d;
+        }
+
+        .instruction-content {
+            display: none;
+            margin-top: 8px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #495057;
+        }
+
+        .instruction-content.visible {
+            display: block;
+        }
+		#promptEditor {
+			position: absolute;
+			top: 44px;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			padding: 16px;
+			border: none;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			font-size: 12px;
+			line-height: 1.6;
+			resize: none;
+			outline: none;
+			overflow-y: auto;
+			overflow-x: hidden;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			color: #212529;
+		}
+
+        #promptEditor:empty:before {
+            content: 'Start typing your prompt here, or select a template from the left...';
+            color: #adb5bd;
+        }
+
+        .right-sidebar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-left: 1px solid #e9ecef;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-sidebar h2 {
+            font-size: 14px;
+            margin-bottom: 14px;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .saved-prompts {
+            margin-bottom: 24px;
+        }
+
+        .saved-prompt-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-prompt-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateX(-2px);
+        }
+
+        .saved-prompt-name {
+            font-size: 12px;
+            color: #495057;
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .sources-section {
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+        }
+
+        .source-link {
+            display: block;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #667eea;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .source-link:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateX(-2px);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .modal-body {
+            color: #495057;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .modal-body h4 {
+            color: #667eea;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .modal-body p {
+            margin-bottom: 12px;
+        }
+
+        .modal-body ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .modal-body li {
+            margin-bottom: 8px;
+        }
+
+        .modal-body strong {
+            color: #333;
+        }
+
+        .modal-body code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #667eea;
+        }
+
+        .clear-option {
+            padding: 14px 16px;
+            margin-top: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .clear-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateX(2px);
+        }
+
+        .clear-option-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .clear-option-desc {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        .clear-option-danger:hover {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .clear-option-danger .clear-option-title {
+            color: #dc3545;
+        }
+
+        .clear-option-cancel {
+            background: #f8f9fa;
+        }
+
+        .clear-option-cancel:hover {
+            border-color: #adb5bd;
+            background: #e9ecef;
+        }
+
+        .clear-option-cancel .clear-option-title {
+            color: #6c757d;
+        }
+
+        .editable-field {
+            background: #e3f2fd;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            padding: 2px 8px;
+            display: inline-block;
+            min-width: 120px;
+            outline: none;
+            transition: all 0.2s;
+            cursor: text;
+            position: relative;
+            margin: 2px 0;
+        }
+
+        .editable-field:empty:before {
+            content: attr(data-placeholder);
+            color: #1a237e;
+            font-style: italic;
+            pointer-events: none;
+        }
+
+        .editable-field:hover {
+            background: #bbdefb;
+        }
+
+        .editable-field:focus {
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .editable-field:not(:empty) {
+            background: transparent;
+            border: none;
+            padding: 0;
+            min-width: 0;
+            margin: 0;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            
+            .sidebar, .right-sidebar {
+                border: none;
+                border-bottom: 1px solid #e9ecef;
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar: Templates -->
+        <div class="sidebar">
+            <h2>Prompt Templates</h2>
+            <div id="templateList"></div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="main-editor">
+            <div class="toolbar">
+                <button class="btn" onclick="App.copyPrompt()" title="Copy entire prompt to clipboard">Copy</button>
+                <button class="btn" onclick="App.savePrompt()" title="Save to browser (persists until cache cleared)">Save</button>
+                <button class="btn btn-secondary" onclick="App.clearEditor()" title="Clear the editor">Clear</button>
+                <button class="btn btn-secondary" onclick="App.exportPrompt()" title="Export as TXT file">Export</button>
+                <button class="btn btn-secondary" onclick="App.importPrompt()" title="Import from file">Import</button>
+                <input type="file" id="fileInput" style="display:none" accept=".json,.txt">
+            </div>
+
+            <div class="editor-container">
+                <div class="editor-header">
+                    <span style="font-weight: 600; color: #495057; font-size: 12px;">Your Prompt</span>
+                    <span class="char-count" id="charCount">0 characters</span>
+                </div>
+                <div id="instructionPanel" class="instruction-panel" style="display: none;" onclick="App.toggleInstructions()">
+                    <div class="instruction-header">
+                        <span id="instructionTitle">Click to expand for template instructions</span>
+                        <span class="instruction-toggle" id="instructionToggle">▼</span>
+                    </div>
+                    <div class="instruction-content" id="instructionContent"></div>
+                </div>
+                <div id="promptEditor" contenteditable="true"></div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Saved Prompts & Sources -->
+        <div class="right-sidebar">
+            <div class="saved-prompts">
+                <h2>Saved Prompts</h2>
+                <div id="savedPromptsList"></div>
+            </div>
+
+            <div class="sources-section">
+                <h2>Sources</h2>
+                <a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering" target="_blank" rel="noopener noreferrer" class="source-link">Anthropic Prompt Guide</a>
+                <a href="https://platform.openai.com/docs/guides/prompt-engineering" target="_blank" rel="noopener noreferrer" class="source-link">OpenAI Prompt Guide</a>
+                <a href="https://ai.google.dev/gemini-api/docs/prompting-strategies" target="_blank" rel="noopener noreferrer" class="source-link">Google Gemini Guide</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close" onclick="App.closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="clearModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Clear or Reset</h3>
+                <button class="modal-close" onclick="App.closeClearModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>What would you like to do?</p>
+                <div class="clear-option" onclick="App.clearCurrentSection()">
+                    <div class="clear-option-title">Clear Current Section</div>
+                    <div class="clear-option-desc">Clears the editor only. Your saved prompts are kept safe.</div>
+                </div>
+                <div class="clear-option clear-option-danger" onclick="App.resetEntireApp()">
+                    <div class="clear-option-title">Reset Entire App</div>
+                    <div class="clear-option-desc">Clears the editor AND deletes all saved prompts. Returns the app to its initial state. This cannot be undone.</div>
+                </div>
+                <div class="clear-option clear-option-cancel" onclick="App.closeClearModal()">
+                    <div class="clear-option-title">Cancel</div>
+                    <div class="clear-option-desc">Go back without changing anything.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="switchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Unsaved Changes</h3>
+                <button class="modal-close" onclick="App.cancelSwitch()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>You have unsaved work in the editor. What would you like to do?</p>
+                <div class="clear-option" onclick="App.saveAndSwitch()">
+                    <div class="clear-option-title">Save first, then continue</div>
+                    <div class="clear-option-desc">Save your current work to Saved Prompts, then load the new content.</div>
+                </div>
+                <div class="clear-option clear-option-danger" onclick="App.discardAndSwitch()">
+                    <div class="clear-option-title">Discard and continue</div>
+                    <div class="clear-option-desc">Throw away your current work and load the new content. This cannot be undone.</div>
+                </div>
+                <div class="clear-option clear-option-cancel" onclick="App.cancelSwitch()">
+                    <div class="clear-option-title">Cancel</div>
+                    <div class="clear-option-desc">Stay on your current work. Nothing will change.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DATA: TEMPLATES
+        // ============================================
+        const TEMPLATES = [
+            {
+                id: 'role-playing',
+                name: 'Role-Playing Persona',
+                type: 'parent',
+                hasExamples: true,
+                content: `You are [specific role with expertise and experience].
+
+Your background:
+- [Years of experience]
+- [Specialization/expertise area]
+- [Relevant credentials or achievements]
+
+Your personality traits:
+- [Trait 1: e.g., analytical, creative, direct]
+- [Trait 2: e.g., detail-oriented, big-picture thinker]
+- [Trait 3: e.g., encouraging, pragmatic, innovative]
+
+Task: [What you need them to do]
+
+Please respond as this character would, maintaining their voice, perspective, and expertise.`,
+                instructions: 'This template assigns a role to the AI. Fill in the blue fields to define who the AI should act as, their background, personality, and what you need them to do.',
+                help: {
+                    title: 'Role-Playing Persona',
+                    description: 'Assign the AI a specific role, expertise, and personality to adopt. This is probably the single most useful technique to learn first — it works for almost anything.',
+                    whenToUse: 'Use when you want domain expertise, a specific communication style, or a particular professional perspective. Great for tutors, advisors, coaches, reviewers, and interviewers.',
+                    tips: [
+                        'Be specific about expertise and years of experience',
+                        'Include personality traits so the tone stays consistent',
+                        'Ask yourself: "Who do I wish I had instant access to right now?"',
+                        'You can stack this with other techniques (few-shot, structured prompts)',
+                        'Avoid using real named people — describe the role instead'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'role-base',
+                        name: 'Interactive Template',
+                        content: `You are [specific role with expertise and experience].
+
+Your background:
+- [Years of experience]
+- [Specialization/expertise area]
+- [Relevant credentials or achievements]
+
+Your personality traits:
+- [Trait 1: e.g., analytical, creative, direct]
+- [Trait 2: e.g., detail-oriented, big-picture thinker]
+- [Trait 3: e.g., encouraging, pragmatic, innovative]
+
+Task: [What you need them to do]
+
+Please respond as this character would, maintaining their voice, perspective, and expertise.`
+                    },
+                    {
+                        id: 'role-hiring',
+                        name: 'Hiring Manager',
+                        content: `You are a senior hiring manager with 15 years of experience recruiting for product roles at tech companies. You've interviewed over 500 candidates and know exactly what separates a strong answer from a weak one.
+
+Your personality:
+- Direct but supportive
+- Asks sharp follow-up questions
+- Notices when answers are vague or rehearsed
+
+Task: I have an interview next week. Please act as the hiring manager and run a realistic mock interview.
+
+Ask me one behavioral question at a time. After each answer, give me honest feedback on what worked, what didn't, and how to strengthen it using the STAR method (Situation, Task, Action, Result). Then ask the next question.
+
+Role I'm interviewing for: [Paste role title and a short description or the job post]
+
+Start with your first question.`
+                    },
+                    {
+                        id: 'role-metaprompt',
+                        name: 'Prompt Engineer',
+                        content: `You are an expert prompt engineer who has spent years studying what makes AI respond well. You understand how different models (Claude, GPT, Gemini) interpret instructions and you know the common mistakes beginners make.
+
+Your approach:
+- Identify what's missing or unclear in a prompt
+- Add helpful context, structure, and specificity
+- Explain your changes so the user learns, not just copies
+
+Task: I'll give you a prompt I'm working on. Please:
+
+1. Tell me what's already working about it
+2. Point out what's missing, vague, or could be clearer
+3. Give me an improved version
+4. Explain the key changes you made and why
+
+My prompt: [Paste your prompt here]`
+                    },
+                    {
+                        id: 'role-consultant',
+                        name: 'Business Consultant',
+                        content: `You are a senior strategy consultant with 20 years of experience helping small and mid-sized businesses solve growth problems. You've worked across retail, services, and tech.
+
+Your style:
+- Data-driven but practical — no jargon for its own sake
+- Ask "what's the real problem?" before proposing solutions
+- Give concrete recommendations, not vague advice
+
+Task: I need help thinking through a business challenge.
+
+My situation: [Describe your business situation, challenge, or decision]
+
+Please ask me any clarifying questions first, then give me your honest analysis and 2-3 recommended next steps ranked by impact.`
+                    },
+                    {
+                        id: 'role-therapist',
+                        name: 'Physical Therapist',
+                        content: `You are a licensed physical therapist with 15 years of experience working with weekend warriors and office workers. You specialize in helping people manage minor injuries and chronic pain without overcomplicating things.
+
+Your approach:
+- Explain things in plain language, not medical jargon
+- Suggest practical exercises people can do at home
+- Clearly flag when something needs a real in-person professional
+
+Task: I'll describe what's bothering me, and I'd like your informal guidance on what might be going on and what I can try.
+
+Important: Please remind me up front that this isn't a substitute for seeing an actual PT or doctor, especially for persistent or worsening issues.
+
+My issue: [Describe the pain, injury, or discomfort — where it is, how long, what makes it better or worse]`
+                    },
+                    {
+                        id: 'role-technical',
+                        name: 'Technical Advisor',
+                        content: `You are a senior engineer with 12 years of experience who genuinely loves teaching. You've worked across startups and big tech, and you're known for explaining complex concepts without being condescending.
+
+Your teaching style:
+- Start from what the person already knows
+- Use analogies before jumping to technical details
+- Show, don't just tell — include small examples
+
+Task: I want to understand [topic or concept] better.
+
+My current level: [Beginner / Some experience / Intermediate]
+What I already know: [Briefly explain what you understand so far]
+What's confusing me: [The specific thing you're stuck on]
+
+Please explain it in a way that builds on what I already know.`
+                    }
+                ]
+            },
+            {
+                id: 'creative-writing',
+                name: 'Creative Writing',
+                type: 'parent',
+                hasExamples: true,
+                content: `Write a [type of content: story/article/post/email] about [topic].
+
+Target Audience: [Who will read this? Be specific about demographics, interests, knowledge level]
+
+Style: [e.g., humorous, formal, narrative, persuasive, poetic]
+
+Tone: [e.g., professional, casual, inspirational, urgent, friendly]
+
+Length: [e.g., 300 words, 2-3 paragraphs, 5-minute read]
+
+Key Requirements:
+- [Requirement 1]
+- [Requirement 2]
+- [Requirement 3]
+
+Additional Context: [Any background information or constraints]`,
+                instructions: 'This template helps you create targeted creative content. Fill in the audience, style, tone, and requirements to guide the AI in producing content that matches your needs.',
+                help: {
+                    title: 'Creative Writing Framework',
+                    description: 'Generate creative content with specific parameters for style, tone, audience, and length to ensure consistent, targeted results.',
+                    whenToUse: 'Use for stories, articles, marketing copy, emails, social posts, or any creative writing where style and audience matter.',
+                    tips: [
+                        'Always specify target audience — this shapes word choice and complexity',
+                        'Define both style (how it\'s written) and tone (emotional quality)',
+                        'Set length constraints to control output size',
+                        'Stack with Role-Playing for a specific authorial voice',
+                        'Include one or two examples if you have a strong format in mind'
+                    ],
+                    advanced: [
+                        'Iterate and refine: The first output is a draft, not the final. Say "make it shorter," "more casual," "rewrite the opening," or "give me three variations." Most beginners don\'t realize they can keep steering — you can.',
+                        'Ask for variations: "Give me 3 different opening lines" lets you pick the best and discard the rest.',
+                        'Critique first, then rewrite: Ask the AI to find weaknesses in its own draft before producing v2.'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'creative-base',
+                        name: 'Interactive Template',
+                        content: `Write a [type of content: story/article/post/email] about [topic].
+
+Target Audience: [Who will read this? Be specific about demographics, interests, knowledge level]
+
+Style: [e.g., humorous, formal, narrative, persuasive, poetic]
+
+Tone: [e.g., professional, casual, inspirational, urgent, friendly]
+
+Length: [e.g., 300 words, 2-3 paragraphs, 5-minute read]
+
+Key Requirements:
+- [Requirement 1]
+- [Requirement 2]
+- [Requirement 3]
+
+Additional Context: [Any background information or constraints]`
+                    },
+                    {
+                        id: 'creative-blog',
+                        name: 'Blog Post',
+                        content: `Write a blog post about [topic].
+
+Target Audience: [Describe who reads this — their expertise level, what they care about, what problem they're trying to solve]
+
+Style: Conversational and informative — like explaining to a friend, not lecturing
+
+Tone: [Friendly / Authoritative / Encouraging]
+
+Length: 600-900 words
+
+Key Requirements:
+- Start with a hook that makes the reader want to keep going
+- Include 2-3 practical takeaways they can use immediately
+- Use subheadings to break up the text
+- End with one clear call-to-action or question
+
+SEO Focus: [Main keyword or topic you want to rank for]
+
+Background: [Anything else about your angle or perspective]`
+                    },
+                    {
+                        id: 'creative-marketing',
+                        name: 'Marketing Copy',
+                        content: `Write marketing copy for [product or service].
+
+What it is: [One-sentence description]
+
+Target Customer:
+- Who they are: [Demographics, lifestyle, role]
+- What problem they have: [The pain point your product solves]
+- What they've tried before: [What hasn't worked for them]
+
+Brand Voice: [e.g., warm and approachable / bold and confident / smart and witty]
+
+Copy Type: [Landing page hero / Email subject line / Social ad / Product description]
+
+Length: [Character or word count]
+
+Key Benefits to Highlight:
+- [Benefit 1 — focus on outcome, not feature]
+- [Benefit 2]
+- [Benefit 3]
+
+Call-to-Action: [What you want them to do]`
+                    },
+                    {
+                        id: 'creative-email',
+                        name: 'Professional Email',
+                        content: `Write a professional email.
+
+Context: [What led to this email — prior conversation, event, situation]
+
+Recipient: [Their role, your relationship with them, formality level they expect]
+
+Purpose: [The main thing you want to accomplish]
+
+Tone: [Friendly / Formal / Warm but direct]
+
+Key Points to Cover:
+- [Point 1]
+- [Point 2]
+- [Point 3]
+
+What I want them to do: [Specific ask, reply, or next step]
+
+Length: Keep it concise — under 150 words if possible`
+                    },
+                    {
+                        id: 'creative-social',
+                        name: 'Social Media Content',
+                        content: `Write a social media post for [platform: LinkedIn / Instagram / Twitter / Facebook].
+
+Topic: [What the post is about]
+
+Goal: [Engagement / Awareness / Drive traffic / Build community]
+
+Brand Voice: [How your brand sounds — e.g., playful, expert, warm]
+
+Target Audience: [Who you're trying to reach]
+
+Platform Notes:
+- LinkedIn: Professional but human, longer form works well
+- Instagram: Visual-first, caption can tell a story, hashtags matter
+- Twitter/X: 280 characters, punchy, threadable if needed
+- Facebook: Conversational, community-focused
+
+Key Message: [The one thing you want people to remember]
+
+Call-to-Action: [Like, share, comment, click, DM, etc.]`
+                    },
+                    {
+                        id: 'creative-story',
+                        name: 'Story/Narrative',
+                        content: `Write a [short story / narrative scene / personal essay] about [subject].
+
+Genre: [Literary fiction / Mystery / Romance / Memoir / Sci-fi / etc.]
+
+Point of View: [First person / Third person limited / Third person omniscient]
+
+Setting: [Time and place]
+
+Main Character: [Brief description — what do we need to know about them?]
+
+Central Tension: [The conflict or question driving the story]
+
+Tone: [Melancholy / Hopeful / Suspenseful / Comedic]
+
+Length: [Word count or scene length]
+
+Ending: [Should it resolve cleanly? Leave ambiguous? End on a twist?]`
+                    }
+                ]
+            },
+            {
+                id: 'ask-before-answering',
+                name: 'Ask Before Answering',
+                type: 'parent',
+                hasExamples: true,
+                content: `Before you answer, please ask me [3-5] clarifying questions so you understand what I actually need.
+
+Focus your questions on:
+- [What context would change your answer]
+- [What assumptions you might be making]
+- [What I might have forgotten to mention]
+
+After I answer your questions, please [what you want them to do: write the email, make the plan, give the advice, etc.]
+
+My initial request: [Paste your rough request here — a rough version is fine, that's the point]`,
+                instructions: 'This template flips the script: instead of you trying to provide perfect context upfront, you have the AI interview you first. Great for planning, advice, or creative tasks where context matters.',
+                help: {
+                    title: 'Ask Before Answering',
+                    description: 'Turn the tables — have the AI ask YOU clarifying questions before it responds. This fixes the single biggest mistake beginners make: not providing enough context.',
+                    whenToUse: 'Use when you have a complex request, when you\'re not sure what context matters, or when you want to think through a problem by being interviewed. Especially powerful as the first step before writing anything substantial.',
+                    tips: [
+                        'Specify how many questions (3-5 is the sweet spot)',
+                        'Try "ask one at a time" for a more conversational flow',
+                        'Works best for planning, advice, learning, and creative tasks',
+                        'Combine with Role-Playing for domain-expert interviews',
+                        'A rough, unpolished request is fine here — that\'s the whole point'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'ask-base',
+                        name: 'Interactive Template',
+                        content: `Before you answer, please ask me [3-5] clarifying questions so you understand what I actually need.
+
+Focus your questions on:
+- [What context would change your answer]
+- [What assumptions you might be making]
+- [What I might have forgotten to mention]
+
+After I answer your questions, please [what you want them to do: write the email, make the plan, give the advice, etc.]
+
+My initial request: [Paste your rough request here — a rough version is fine, that's the point]`
+                    },
+                    {
+                        id: 'ask-planning',
+                        name: 'Project Planning',
+                        content: `I'm planning a project and my description will be incomplete. Before giving me any advice or a plan, please ask me 5 clarifying questions — one at a time, waiting for my answer before asking the next.
+
+Focus your questions on:
+- The actual outcome I'm trying to achieve (not just what I said I want)
+- Constraints I might have forgotten to mention (time, money, people, skills)
+- What I've already tried or ruled out
+- What "done" actually looks like to me
+- Who else is affected by this
+
+After all 5 questions are answered, give me a practical plan with clear next steps.
+
+My project: [Rough description — don't polish it, just say what you're trying to do]`
+                    },
+                    {
+                        id: 'ask-learning',
+                        name: 'Learning Something New',
+                        content: `I want to learn [topic]. Before you start teaching, please ask me 4 questions to understand where I'm coming from.
+
+Ask about:
+- What I already know (so you don't start too basic or too advanced)
+- Why I want to learn this (the goal shapes what matters)
+- How I learn best (examples, analogies, exercises, reading)
+- How much time I realistically have
+
+Wait for my answers, then build me a learning path that actually fits me — not a generic overview.
+
+Topic I want to learn: [Topic]`
+                    },
+                    {
+                        id: 'ask-decision',
+                        name: 'Making a Decision',
+                        content: `I'm trying to make a decision and I want you to help me think it through — but not by jumping to an answer.
+
+Please ask me 4-5 questions first to understand:
+- What I'm actually deciding between
+- What matters most to me in this decision
+- What I'm worried about or afraid of getting wrong
+- What a "good enough" outcome looks like
+- Any constraints I haven't mentioned
+
+After I answer, lay out the tradeoffs honestly. Don't tell me what to do — help me see the decision clearly.
+
+My decision: [Rough description of what you're weighing]`
+                    }
+                ]
+            },
+            {
+                id: 'few-shot',
+                name: 'Few-Shot Learning',
+                type: 'parent',
+                hasExamples: true,
+                content: `Here are examples of what I'm looking for:
+
+Example 1:
+Input: [Example input 1]
+Output: [Example output 1]
+
+Example 2:
+Input: [Example input 2]
+Output: [Example output 2]
+
+Now, please apply the same approach to:
+
+Input: [Your actual input]`,
+                instructions: 'This template teaches the AI by example. Fill in 2 input/output pairs showing the pattern you want, then provide your actual input at the bottom.',
+                help: {
+                    title: 'Few-Shot Learning',
+                    description: 'Teach the AI by example. Show 2-3 input/output pairs to demonstrate the exact pattern, format, or style you want.',
+                    whenToUse: 'Use when the task is hard to explain but easy to show, or when you need consistent formatting across multiple items.',
+                    tips: [
+                        'Usually 2 examples are enough; 3 for edge cases',
+                        'Make examples diverse to cover different scenarios',
+                        'Quality matters — the AI will mimic your examples closely',
+                        'Perfect for formatting, style matching, and pattern work',
+                        'Often works better than lengthy explanations for complex formats'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'few-shot-base',
+                        name: 'Interactive Template',
+                        content: `Here are examples of what I'm looking for:
+
+Example 1:
+Input: [Example input 1]
+Output: [Example output 1]
+
+Example 2:
+Input: [Example input 2]
+Output: [Example output 2]
+
+Now, please apply the same approach to:
+
+Input: [Your actual input]`
+                    },
+                    {
+                        id: 'few-shot-resume',
+                        name: 'Resume Bullet Points',
+                        content: `Here are examples of what I'm looking for:
+
+Example 1:
+Input: Managed social media accounts
+Output: Grew Instagram following by 340% (5K to 22K followers) over 6 months by implementing a data-driven content strategy, resulting in a 15% increase in website traffic and $50K in attributed sales.
+
+Example 2:
+Input: Helped with customer service
+Output: Resolved 95% of customer inquiries within 24 hours (50+ tickets daily) by creating a knowledge base and standardized response templates, improving customer satisfaction scores from 3.2 to 4.7/5.0.
+
+Now, please apply the same approach to transform these weak bullets into strong, achievement-focused statements using numbers, methods, and outcomes:
+
+Input: [Paste your weak resume bullets here]`
+                    },
+                    {
+                        id: 'few-shot-email',
+                        name: 'Email Response Styles',
+                        content: `Here are examples of what I'm looking for:
+
+Example 1 — Frustrated Customer:
+Input: "This is the 3rd time I've contacted you about my order! Where is it?!!"
+Output: "I sincerely apologize for the frustration — this is absolutely not the experience we want you to have. I've personally escalated your case to our shipping manager, and I can confirm your order will arrive by Friday with expedited shipping at no charge. I'll email you tracking updates twice daily until it arrives. Please reach me directly at [contact] if you need anything else. Thank you for your patience."
+
+Example 2 — Pricing Inquiry:
+Input: "How much does piano lessons cost?"
+Output: "Thanks for your interest in our piano program! We offer flexible options:
+
+- Beginner (30 min): $40/lesson or $140/month
+- Intermediate (45 min): $55/lesson or $200/month
+- Advanced (60 min): $70/lesson or $260/month
+
+All new students get a free trial lesson — no commitment required. Sibling discounts available.
+
+What age is the student, and do they have any prior experience? I'd be happy to recommend the best starting point."
+
+Now, please write an appropriate professional email response for:
+
+Input: [Paste the customer email you need to respond to]`
+                    },
+                    {
+                        id: 'few-shot-data',
+                        name: 'Data Formatting',
+                        content: `Here are examples of transforming messy notes into organized information:
+
+Example 1 — Contact Information:
+Input: Sarah Martinez, works at County Hospital as head nurse, email sarah.m@countyhospital.org, cell 555-0123, started 2018, birthday July 15th
+
+Output:
+Name: Sarah Martinez
+Workplace: County Hospital
+Job Title: Head Nurse
+Email: sarah.m@countyhospital.org
+Phone: 555-0123
+Start Date: 2018
+Birthday: July 15
+
+Example 2 — Event Planning:
+Input: Wedding reception June 10th 2024 at Riverside Gardens, ceremony 4pm, dinner 6, around 120 guests, budget $8000, need photographer and DJ, navy and gold colors, vegetarian option required
+
+Output:
+EVENT: Wedding Reception
+DATE: June 10, 2024
+VENUE: Riverside Gardens
+
+TIMELINE:
+- 4:00 PM — Ceremony
+- 6:00 PM — Dinner service
+
+DETAILS:
+- Guest count: 120
+- Budget: $8,000
+- Color scheme: Navy & Gold
+- Dietary: Vegetarian option required
+
+VENDORS NEEDED:
+- Photographer
+- DJ
+
+Now, please organize this messy information into a clean, structured format:
+
+Input: [Paste your unorganized notes or data here]`
+                    },
+                    {
+                        id: 'few-shot-social',
+                        name: 'Social Media Posts',
+                        content: `Here are examples of adapting one message across platforms while keeping the brand voice:
+
+Example 1 — Product Announcement:
+Input: We're now making sourdough cinnamon rolls every Saturday
+
+LinkedIn:
+Exciting news from Sweet Rise Bakery 🥐
+
+After months of recipe testing, we're launching Saturday Sourdough Cinnamon Rolls:
+✓ 48-hour fermented sourdough base
+✓ Madagascar vanilla cream cheese frosting
+✓ Hand-rolled with organic cinnamon
+✓ Warm from 8am-noon every Saturday
+
+Small batch only (60 rolls) — preorder recommended.
+
+#SupportLocal #ArtisanBakery
+
+Instagram:
+Saturday mornings are about to hit different 🥐✨
+
+Introducing our 48-hour sourdough cinnamon rolls — crispy edges, fluffy center, cream cheese frosting that dreams are made of.
+
+SATURDAYS ONLY | 8am-noon | 60 rolls per week
+
+Link in bio to preorder 💛
+
+#CinnamonRolls #SourdoughBaking #WeekendVibes
+
+Example 2 — Behind-the-Scenes:
+Input: Our baker starts at 3am to prep fresh bread
+
+LinkedIn:
+Ever wonder what 3am looks like at a bakery? ☕🌙
+
+Our head baker Maria has been with us 8 years, arriving before sunrise so your morning croissants are perfect.
+
+"The best part? Seeing customers' faces when they smell fresh bread. That never gets old." — Maria
+
+Behind every warm loaf is someone who truly cares.
+
+#BakeryLife #SmallBusiness
+
+Instagram:
+This is 3am at Sweet Rise 🌙
+
+While you're sleeping, Maria is shaping your morning baguette. 8 years in, she still says the best part is seeing your smile when you walk in.
+
+Every loaf. Made by hands that care.
+
+Thank you for supporting small bakeries 💛
+
+#BakersLife #BehindTheScenes #ArtisanBread
+
+Now, please adapt this message for LinkedIn and Instagram:
+
+Input: [Describe your core message or announcement]`
+                    }
+                ]
+            },
+            {
+                id: 'structured-prompt',
+                name: 'Structured Prompt',
+                type: 'parent',
+                hasExamples: true,
+                content: `--- TASK ---
+[Define the specific action you want the AI to perform]
+
+--- CONTEXT ---
+[Provide background information, scope, and constraints]
+
+--- INPUT DATA ---
+[Paste your data, document, survey results, etc.]
+
+--- FORMAT ---
+[Specify how you want the output structured]
+
+--- TONE ---
+[Define the style: professional, casual, persuasive, etc.]
+
+Note: You can also use XML-style tags like <TASK></TASK> instead of --- markers. Both work — use whichever feels cleaner. Claude tends to respond especially well to XML tags; ChatGPT and Gemini handle either fine.`,
+                instructions: 'This template uses clear delimiters to separate different parts of your prompt. Fill in each section. This prevents the AI from confusing your instructions with your pasted-in data.',
+                help: {
+                    title: 'Structured Prompt',
+                    description: 'Separate your instructions from your data using clear delimiters — XML tags, markdown headers, or dividers. This stops the AI from treating your pasted content as part of the instructions.',
+                    whenToUse: 'Use when you have multiple distinct pieces (task, data, examples, format specs), when pasting in long documents, or when your prompt has gotten complex enough that clarity matters.',
+                    tips: [
+                        'XML-style tags (<TASK></TASK>) work especially well with Claude',
+                        'Markdown headers (### TASK) work well with GPT and Gemini',
+                        'Triple dashes (---) or triple backticks are also fine delimiters',
+                        'The specific syntax matters less than having clear separation',
+                        'Use descriptive names (TASK, DATA, OUTPUT) — not generic ones'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'structured-base',
+                        name: 'Interactive Template',
+                        content: `--- TASK ---
+[Define the specific action you want the AI to perform]
+
+--- CONTEXT ---
+[Provide background information, scope, and constraints]
+
+--- INPUT DATA ---
+[Paste your data, document, survey results, etc.]
+
+--- FORMAT ---
+[Specify how you want the output structured]
+
+--- TONE ---
+[Define the style: professional, casual, persuasive, etc.]
+
+Note: You can also use XML-style tags like <TASK></TASK> instead of --- markers. Both work — use whichever feels cleaner.`
+                    },
+                    {
+                        id: 'structured-interview',
+                        name: 'Interview Preparation',
+                        content: `<TASK>
+Analyze the resume against the job description, then identify my top 3 strengths to highlight and 2 potential gaps I should prepare to address.
+</TASK>
+
+<RESUME>
+[Paste your resume here]
+</RESUME>
+
+<JOB_DESCRIPTION>
+[Paste the job description here]
+</JOB_DESCRIPTION>
+
+<OUTPUT_FORMAT>
+1. Top 3 Strengths — for each, give me a specific talking point I could use in the interview
+2. 2 Potential Gaps — for each, suggest how I can honestly address it (reframe it, acknowledge and show learning, etc.)
+3. 3 Questions I should prepare answers for, based on this specific role
+</OUTPUT_FORMAT>`
+                    },
+                    {
+                        id: 'structured-email',
+                        name: 'Professional Email',
+                        content: `### TASK
+Draft a partnership outreach email.
+
+### MY COMPANY
+[Brief description of what you do and your value]
+
+### RECIPIENT
+[Their company, their role, why they'd care]
+
+### KEY POINTS TO MAKE
+- [Point 1]
+- [Point 2]
+- [Point 3]
+
+### DESIRED OUTCOME
+[What specifically you want from them — meeting, intro call, reply]
+
+### CONSTRAINTS
+- Under 150 words
+- Professional but not stiff
+- No "I hope this email finds you well" opener`
+                    },
+                    {
+                        id: 'structured-content',
+                        name: 'Content Analysis',
+                        content: `<TASK>
+Read the article and extract the 5 most important points, then give me your honest assessment of the author's argument.
+</TASK>
+
+<ARTICLE>
+[Paste the article text here]
+</ARTICLE>
+
+<ANALYSIS_INSTRUCTIONS>
+For each key point, give me:
+- The point in one sentence
+- The evidence the author uses
+- How convincing it is (1-5) and why
+
+Then your overall take:
+- What the author gets right
+- What they overlook or get wrong
+- Who would benefit from reading this
+</ANALYSIS_INSTRUCTIONS>`
+                    },
+                    {
+                        id: 'structured-survey',
+                        name: 'Survey Feedback',
+                        content: `<TASK>
+Analyze this customer feedback and identify patterns I should act on.
+</TASK>
+
+<FEEDBACK_DATA>
+[Paste survey responses, reviews, or customer comments here]
+</FEEDBACK_DATA>
+
+<ANALYSIS_REQUEST>
+Please identify:
+1. Top 3 complaints (with rough frequency if you can tell)
+2. Top 3 most-requested features or changes
+3. Surprising patterns I might have missed
+4. Which issues seem urgent vs. "nice to have"
+
+Format as a clear summary I can share with my team.
+</ANALYSIS_REQUEST>`
+                    }
+                ]
+            },
+            {
+                id: 'reasoning-prompts',
+                name: 'Reasoning Prompts',
+                type: 'parent',
+                hasExamples: true,
+                content: `[Your question or problem here]
+
+Before giving me your final answer, please think through this carefully. Show me:
+
+- Your reasoning process
+- Any assumptions you're making
+- Considerations that might change the answer
+- How confident you are in your conclusion
+
+Don't rush to the answer — I care more about good thinking than a fast reply.`,
+                instructions: 'This template nudges the AI to reason out loud before answering. Especially useful for math, logic, analysis, or anything where the reasoning matters as much as the answer.',
+                help: {
+                    title: 'Reasoning Prompts',
+                    description: 'Nudge the AI to think through problems carefully instead of jumping to an answer. Modern models reason well when you ask — you don\'t need to script every step yourself anymore.',
+                    whenToUse: 'Use for math, logic, analysis, decisions, or anywhere you want to see (and verify) the reasoning — not just get an answer.',
+                    tips: [
+                        '"Think step by step" still works — it\'s the classic trigger phrase',
+                        '"Show your reasoning" works even better with current models',
+                        '"Before answering, consider..." lets you steer the thinking',
+                        'You no longer need to script every step — models reason well when asked',
+                        'Great for catching errors: you can spot where the logic went wrong'
+                    ],
+                    advanced: [
+                        'Extended thinking: Claude and GPT reasoning models engage deeper reasoning when you ask them to "think carefully" or "take your time"',
+                        'Self-critique: Ask "what might be wrong with your answer?" after getting a response',
+                        'Show confidence: Ask the model to rate its own confidence (1-5) and explain why'
+                    ]
+                },
+                examples: [
+                    {
+                        id: 'reasoning-base',
+                        name: 'Interactive Template',
+                        content: `[Your question or problem here]
+
+Before giving me your final answer, please think through this carefully. Show me:
+
+- Your reasoning process
+- Any assumptions you're making
+- Considerations that might change the answer
+- How confident you are in your conclusion
+
+Don't rush to the answer — I care more about good thinking than a fast reply.`
+                    },
+                    {
+                        id: 'reasoning-math',
+                        name: 'Math Problem Solving',
+                        content: `Solve this problem: [Paste math problem or word problem here]
+
+Please work through this step by step. For each step:
+1. Explain what you're doing and why
+2. Show the calculation
+3. State the result before moving on
+
+At the end, clearly state the final answer and double-check your work by verifying it makes sense.
+
+If there's a common way people get this type of problem wrong, mention it so I can avoid the same mistake.`
+                    },
+                    {
+                        id: 'reasoning-multistep',
+                        name: 'Multi-Step Project',
+                        content: `I'm working on [project/task] and it's too big to tackle in one prompt. Let's break it down.
+
+Project goal: [What "done" looks like]
+Constraints: [Time, resources, skills, etc.]
+
+Please:
+1. Break this project into 4-6 distinct phases
+2. For each phase, describe what gets done and what the output is
+3. Flag dependencies (what must happen before what)
+4. Tell me which phase to start with and what questions you'd need answered to help me with that phase
+
+Don't try to solve the whole project right now — just give me the roadmap. We'll tackle each phase in follow-up prompts.`
+                    },
+                    {
+                        id: 'reasoning-analysis',
+                        name: 'Complex Analysis',
+                        content: `I need help analyzing [situation/decision/problem].
+
+The situation: [Description with relevant facts]
+
+Please think through this carefully in phases:
+
+Phase 1 — Understand: What are the key facts and what's actually being asked?
+Phase 2 — Analyze: What are the main considerations, tradeoffs, and unknowns?
+Phase 3 — Evaluate: What are 2-3 reasonable approaches or conclusions?
+Phase 4 — Recommend: Given everything, what would you suggest and why?
+
+Show your thinking in each phase. I want to see how you got to the recommendation — not just the recommendation itself.`
+                    }
+                ]
+            }
+        ];
+
+        // ============================================
+        // MAIN APPLICATION
+        // ============================================
+        const App = {
+            currentPrompt: '',
+            currentTemplate: null,
+            savedPrompts: [],
+            instructionsExpanded: false,
+            autosaveTimer: null,
+            userHasEdited: false,
+            pendingSwitchAction: null,
+
+            init() {
+                this.savedPrompts = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+                this.renderTemplates();
+                this.renderSavedPrompts();
+                this.setupEventListeners();
+                this.restoreAutosave();
+            },
+
+            restoreAutosave() {
+                try {
+                    const draft = localStorage.getItem('autosaveDraft');
+                    if (!draft) return;
+                    const data = JSON.parse(draft);
+                    if (data && data.content && data.content.trim()) {
+                        const editor = document.getElementById('promptEditor');
+                        editor.textContent = data.content;
+                        this.currentPrompt = data.content;
+                        this.updateCharCount();
+                        // Restored content is user work — mark dirty so switch-away warns
+                        this.userHasEdited = true;
+                        this.showToast('Draft restored from last session');
+                    }
+                } catch (e) {
+                    console.warn('Could not restore autosave:', e);
+                }
+            },
+
+            autosave() {
+                clearTimeout(this.autosaveTimer);
+                this.autosaveTimer = setTimeout(() => {
+                    try {
+                        localStorage.setItem('autosaveDraft', JSON.stringify({
+                            content: this.currentPrompt,
+                            timestamp: new Date().toISOString()
+                        }));
+                    } catch (e) {
+                        console.warn('Autosave failed:', e);
+                    }
+                }, 600);
+            },
+
+            clearAutosave() {
+                try {
+                    localStorage.removeItem('autosaveDraft');
+                } catch (e) {}
+            },
+
+            setupEventListeners() {
+                const editor = document.getElementById('promptEditor');
+                editor.addEventListener('input', () => {
+                    this.userHasEdited = true;
+                    this.syncPromptContent();
+                });
+                editor.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileImport(e));
+                document.getElementById('helpModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'helpModal') this.closeModal();
+                });
+                document.getElementById('clearModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'clearModal') this.closeClearModal();
+                });
+                document.getElementById('switchModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'switchModal') this.cancelSwitch();
+                });
+
+                // Flush autosave immediately on tab close / navigation
+                const flushAutosave = () => {
+                    clearTimeout(this.autosaveTimer);
+                    if (this.currentPrompt && this.currentPrompt.trim()) {
+                        try {
+                            localStorage.setItem('autosaveDraft', JSON.stringify({
+                                content: this.currentPrompt,
+                                timestamp: new Date().toISOString()
+                            }));
+                        } catch (err) {}
+                    }
+                };
+
+                // Warn before closing tab if there's unsaved user work
+                window.addEventListener('beforeunload', (e) => {
+                    flushAutosave();
+                    if (this.userHasEdited && this.currentPrompt && this.currentPrompt.trim()) {
+                        e.preventDefault();
+                        e.returnValue = '';
+                    }
+                });
+
+                // pagehide is more reliable on mobile / background tabs
+                window.addEventListener('pagehide', flushAutosave);
+                window.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') flushAutosave();
+                });
+            },
+
+            renderTemplates() {
+                const list = document.getElementById('templateList');
+                list.innerHTML = TEMPLATES.map(t => {
+                    let html = '<div class="template-item">';
+                    html += '<div class="template-container">';
+                    
+                    if (t.hasExamples) {
+                        html += `<button class="template-btn" id="template-${t.id}" onclick="App.toggleExamples('${t.id}')">
+                            <span class="expand-arrow" id="arrow-${t.id}">▶</span>
+                            ${t.name}
+                        </button>`;
+                    } else {
+                        html += `<button class="template-btn" id="template-${t.id}" onclick="App.loadTemplate('${t.id}')">${t.name}</button>`;
+                    }
+                    
+                    if (t.help) {
+                        html += `<button class="help-icon" onclick="App.showHelp('${t.id}')">?</button>`;
+                    }
+                    html += '</div>';
+                    
+                    if (t.hasExamples && t.examples) {
+                        html += `<div class="example-list" id="examples-${t.id}">`;
+                        t.examples.forEach(ex => {
+                            html += `<button class="example-btn" id="example-${ex.id}" onclick="App.loadExample('${t.id}', '${ex.id}')">${ex.name}</button>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    return html;
+                }).join('');
+            },
+
+            toggleExamples(templateId) {
+                // Just expand/collapse the example list. Don't touch the editor —
+                // the user might be working on something.
+                const exampleList = document.getElementById(`examples-${templateId}`);
+                const arrow = document.getElementById(`arrow-${templateId}`);
+
+                if (exampleList.classList.contains('visible')) {
+                    exampleList.classList.remove('visible');
+                    arrow.classList.remove('expanded');
+                } else {
+                    exampleList.classList.add('visible');
+                    arrow.classList.add('expanded');
+                }
+            },
+
+            clearEditorToBlank() {
+                const editor = document.getElementById('promptEditor');
+                editor.innerHTML = '';
+                this.currentPrompt = '';
+                this.userHasEdited = false;
+                this.updateCharCount();
+                document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'));
+                this.currentTemplate = null;
+                document.getElementById('instructionPanel').style.display = 'none';
+				
+				setTimeout(() => this.updateEditorPosition(), 0);
+            },
+
+            confirmSwitchIfDirty(proceedFn) {
+                if (!this.userHasEdited || !this.currentPrompt || !this.currentPrompt.trim()) {
+                    proceedFn();
+                    return;
+                }
+                this.pendingSwitchAction = proceedFn;
+                document.getElementById('switchModal').classList.add('show');
+            },
+
+            saveAndSwitch() {
+                document.getElementById('switchModal').classList.remove('show');
+                const saved = this.savePromptInternal();
+                if (saved && this.pendingSwitchAction) {
+                    this.pendingSwitchAction();
+                }
+                this.pendingSwitchAction = null;
+            },
+
+            discardAndSwitch() {
+                document.getElementById('switchModal').classList.remove('show');
+                this.clearAutosave();
+                if (this.pendingSwitchAction) {
+                    this.pendingSwitchAction();
+                }
+                this.pendingSwitchAction = null;
+            },
+
+            cancelSwitch() {
+                document.getElementById('switchModal').classList.remove('show');
+                this.pendingSwitchAction = null;
+            },
+
+            renderSavedPrompts() {
+                const list = document.getElementById('savedPromptsList');
+                list.innerHTML = '';
+                if (this.savedPrompts.length === 0) {
+                    const empty = document.createElement('p');
+                    empty.style.cssText = 'color: #6c757d; font-size: 11px; font-style: italic;';
+                    empty.textContent = 'No saved prompts yet';
+                    list.appendChild(empty);
+                    return;
+                }
+                this.savedPrompts.forEach((p, i) => {
+                    const item = document.createElement('div');
+                    item.className = 'saved-prompt-item';
+
+                    const name = document.createElement('span');
+                    name.className = 'saved-prompt-name';
+                    name.textContent = p.name;
+                    name.addEventListener('click', () => this.loadSavedPrompt(i));
+
+                    const del = document.createElement('button');
+                    del.className = 'delete-btn';
+                    del.textContent = '×';
+                    del.addEventListener('click', () => this.deleteSavedPrompt(i));
+
+                    item.appendChild(name);
+                    item.appendChild(del);
+                    list.appendChild(item);
+                });
+            },
+
+            loadTemplate(id, fromExpand = false) {
+                this.confirmSwitchIfDirty(() => this._doLoadTemplate(id, fromExpand));
+            },
+
+            _doLoadTemplate(id, fromExpand = false) {
+                document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'));
+                
+                if (!fromExpand) {
+                    document.getElementById(`template-${id}`).classList.add('active');
+                }
+
+                const template = TEMPLATES.find(t => t.id === id);
+                if (template) {
+                    this.currentTemplate = template;
+                    const processedContent = this.makeFieldsEditable(template.content);
+                    const editor = document.getElementById('promptEditor');
+                    editor.innerHTML = processedContent;
+                    this.syncPromptContent();
+                    this.updateCharCount();
+                    this.setupEditableFields();
+                    this.showInstructions(template);
+                    // Fresh template load — not user-edited yet
+                    this.userHasEdited = false;
+                    this.clearAutosave();
+                }
+            },
+
+            loadExample(templateId, exampleId) {
+                this.confirmSwitchIfDirty(() => this._doLoadExample(templateId, exampleId));
+            },
+
+            _doLoadExample(templateId, exampleId) {
+                document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`example-${exampleId}`).classList.add('active');
+
+                const template = TEMPLATES.find(t => t.id === templateId);
+                if (template && template.examples) {
+                    const example = template.examples.find(e => e.id === exampleId);
+                    if (example) {
+                        this.currentTemplate = template;
+                        
+                        // Check if this is an "Interactive Template" (base template with editable fields)
+                        if (example.name === 'Interactive Template') {
+                            const processedContent = this.makeFieldsEditable(example.content);
+                            const editor = document.getElementById('promptEditor');
+                            editor.innerHTML = processedContent;
+                            this.syncPromptContent();
+                            this.updateCharCount();
+                            this.setupEditableFields();
+                            this.showInstructions(template);
+                        } else {
+                            // Regular example - just show text
+                            const editor = document.getElementById('promptEditor');
+                            editor.innerHTML = '';
+                            editor.textContent = example.content;
+                            this.currentPrompt = example.content;
+                            this.updateCharCount();
+                            this.showInstructions(template);
+                        }
+                        // Fresh example load — not user-edited yet
+                        this.userHasEdited = false;
+                        this.clearAutosave();
+                    }
+                }
+            },
+
+            showInstructions(template) {
+                const panel = document.getElementById('instructionPanel');
+                const content = document.getElementById('instructionContent');
+                
+                if (template.instructions) {
+                    content.textContent = template.instructions;
+                    panel.style.display = 'block';
+                    this.instructionsExpanded = false;
+                    document.getElementById('instructionToggle').textContent = '▼';
+                    document.getElementById('instructionTitle').textContent = 'Click to expand for template instructions';
+                    content.classList.remove('visible');
+                } else {
+                    panel.style.display = 'none';
+                }
+				
+				setTimeout(() => this.updateEditorPosition(), 0);
+            },
+
+            toggleInstructions() {
+                const content = document.getElementById('instructionContent');
+                const toggle = document.getElementById('instructionToggle');
+                const title = document.getElementById('instructionTitle');
+                
+                this.instructionsExpanded = !this.instructionsExpanded;
+                
+                if (this.instructionsExpanded) {
+                    content.classList.add('visible');
+                    toggle.textContent = '▲';
+                    title.textContent = 'Template Instructions';
+                } else {
+                    content.classList.remove('visible');
+                    toggle.textContent = '▼';
+                    title.textContent = 'Click to expand for template instructions';
+                }
+				
+				setTimeout(() => this.updateEditorPosition(), 10);
+            },
+			
+			updateEditorPosition() {
+                const editor = document.getElementById('promptEditor');
+                const header = document.querySelector('.editor-header');
+                const instructionPanel = document.getElementById('instructionPanel');
+                
+                let topOffset = header ? header.offsetHeight : 44;
+                
+                if (instructionPanel && instructionPanel.style.display !== 'none') {
+                    topOffset += instructionPanel.offsetHeight;
+                }
+                
+                editor.style.top = topOffset + 'px';
+            },
+			
+            makeFieldsEditable(content) {
+                if (!content) return '';
+                return content.replace(/\[([^\]]+)\]/g, (match, innerText) => {
+                    return `<span class="editable-field" contenteditable="true" data-placeholder="${innerText}"></span>`;
+                });
+            },
+
+            setupEditableFields() {
+                document.querySelectorAll('.editable-field').forEach(field => {
+                    field.addEventListener('input', () => {
+                        this.userHasEdited = true;
+                        this.syncPromptContent();
+                    });
+
+                    field.addEventListener('focus', (e) => {
+                        const target = e.target;
+                        if (target.textContent === '') {
+                            setTimeout(() => {
+                                const range = document.createRange();
+                                const sel = window.getSelection();
+                                if (target.childNodes.length > 0) {
+                                    range.setStart(target.childNodes[0], 0);
+                                } else {
+                                    range.setStart(target, 0);
+                                }
+                                range.collapse(true);
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }, 0);
+                        }
+                    });
+                });
+            },
+
+            syncPromptContent() {
+                const editor = document.getElementById('promptEditor');
+                this.currentPrompt = editor.innerText || editor.textContent || '';
+                this.updateCharCount();
+                this.autosave();
+            },
+
+            updateCharCount() {
+                const count = this.currentPrompt.length;
+                document.getElementById('charCount').textContent = `${count.toLocaleString()} characters`;
+            },
+
+            copyPrompt() {
+                const text = this.currentPrompt;
+                if (!text || !text.trim()) {
+                    this.showToast('Nothing to copy!', 'error');
+                    return;
+                }
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showToast('Copied to clipboard!');
+                });
+            },
+
+            clearEditor() {
+                document.getElementById('clearModal').classList.add('show');
+            },
+
+            closeClearModal() {
+                document.getElementById('clearModal').classList.remove('show');
+            },
+
+            clearCurrentSection() {
+                this.closeClearModal();
+                this.clearEditorToBlank();
+                this.clearAutosave();
+                this.showToast('Current section cleared');
+            },
+
+            resetEntireApp() {
+                this.closeClearModal();
+                if (!confirm('This will permanently delete ALL saved prompts AND clear the editor. This cannot be undone. Continue?')) {
+                    return;
+                }
+                try {
+                    localStorage.removeItem('savedPrompts');
+                    localStorage.removeItem('autosaveDraft');
+                } catch (e) {}
+                this.savedPrompts = [];
+                this.renderSavedPrompts();
+                this.clearEditorToBlank();
+                this.showToast('App reset to initial state');
+            },
+
+            savePrompt() {
+                this.savePromptInternal();
+            },
+
+            savePromptInternal() {
+                const text = this.currentPrompt;
+                if (!text || !text.trim()) {
+                    this.showToast('Nothing to save!', 'error');
+                    return false;
+                }
+                
+                const name = prompt('Name this prompt:');
+                if (!name) return false;
+                
+                this.savedPrompts.push({
+                    name: name,
+                    content: text,
+                    date: new Date().toISOString()
+                });
+                
+                try {
+                    localStorage.setItem('savedPrompts', JSON.stringify(this.savedPrompts));
+                } catch (e) {
+                    // Roll back the in-memory push so state stays consistent
+                    this.savedPrompts.pop();
+                    this.showToast('Save failed — storage full or unavailable', 'error');
+                    return false;
+                }
+                this.renderSavedPrompts();
+                this.userHasEdited = false;
+                this.clearAutosave();
+                this.showToast('Prompt saved!');
+                return true;
+            },
+
+            loadSavedPrompt(index) {
+                this.confirmSwitchIfDirty(() => this._doLoadSavedPrompt(index));
+            },
+
+            _doLoadSavedPrompt(index) {
+                const saved = this.savedPrompts[index];
+                if (!saved) {
+                    this.showToast('Prompt not found', 'error');
+                    return;
+                }
+                const editor = document.getElementById('promptEditor');
+                editor.innerHTML = '';
+                editor.textContent = saved.content;
+                this.currentPrompt = saved.content;
+                this.updateCharCount();
+                document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'));
+                this.currentTemplate = null;
+                document.getElementById('instructionPanel').style.display = 'none';
+                this.userHasEdited = false;
+                this.clearAutosave();
+                this.showToast(`Loaded: ${saved.name}`);
+            },
+
+            deleteSavedPrompt(index) {
+                if (confirm('Delete this saved prompt?')) {
+                    const removed = this.savedPrompts.splice(index, 1)[0];
+                    try {
+                        localStorage.setItem('savedPrompts', JSON.stringify(this.savedPrompts));
+                    } catch (e) {
+                        // Roll back the splice so state stays consistent
+                        this.savedPrompts.splice(index, 0, removed);
+                        this.showToast('Delete failed — storage error', 'error');
+                        return;
+                    }
+                    this.renderSavedPrompts();
+                    this.showToast('Prompt deleted');
+                }
+            },
+
+            exportPrompt() {
+                const text = this.currentPrompt;
+                if (!text || !text.trim()) {
+                    this.showToast('Nothing to export!', 'error');
+                    return;
+                }
+                
+                const defaultName = `prompt-${new Date().toISOString().split('T')[0]}`;
+                const filename = prompt('Enter filename (without extension):', defaultName);
+                if (!filename) return;
+                
+                const blob = new Blob([text], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${filename}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.showToast('Exported as TXT file!');
+            },
+
+            importPrompt() {
+                document.getElementById('fileInput').click();
+            },
+
+            handleFileImport(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const doImport = () => {
+                        let content;
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            content = data.prompt || event.target.result;
+                        } catch (err) {
+                            content = event.target.result;
+                        }
+                        const editor = document.getElementById('promptEditor');
+                        editor.innerHTML = '';
+                        editor.textContent = content;
+                        this.currentPrompt = content;
+                        this.updateCharCount();
+                        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'));
+                        this.currentTemplate = null;
+                        document.getElementById('instructionPanel').style.display = 'none';
+                        // Imported content IS user work — treat as dirty so it gets autosaved
+                        this.userHasEdited = true;
+                        this.autosave();
+                        this.showToast('Imported successfully!');
+                    };
+                    this.confirmSwitchIfDirty(doImport);
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            },
+
+            showHelp(templateId) {
+                const template = TEMPLATES.find(t => t.id === templateId);
+                if (!template || !template.help) return;
+                
+                const modal = document.getElementById('helpModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalBody = document.getElementById('modalBody');
+                
+                modalTitle.textContent = template.help.title;
+                
+                let bodyHTML = `
+                    <p><strong>Description:</strong> ${template.help.description}</p>
+                    <h4>When to Use</h4>
+                    <p>${template.help.whenToUse}</p>
+                    <h4>Tips</h4>
+                    <ul>
+                `;
+                
+                template.help.tips.forEach(tip => {
+                    bodyHTML += `<li>${tip}</li>`;
+                });
+                
+                bodyHTML += `</ul>`;
+                
+                if (template.help.advanced) {
+                    bodyHTML += `<h4>Advanced Techniques</h4><ul>`;
+                    template.help.advanced.forEach(tip => {
+                        bodyHTML += `<li>${tip}</li>`;
+                    });
+                    bodyHTML += `</ul>`;
+                }
+                
+                modalBody.innerHTML = bodyHTML;
+                modal.classList.add('show');
+            },
+
+            closeModal() {
+                document.getElementById('helpModal').classList.remove('show');
+            },
+
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.style.background = type === 'error' ? '#dc3545' : '#28a745';
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>

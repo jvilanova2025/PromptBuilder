@@ -1,0 +1,152 @@
+# =============================================================================
+# .gitignore — HTML + PowerShell Project (Windows 11)
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Secrets & Environment Variables — highest priority
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.cer
+*.crt
+secrets.json
+credentials.json
+config.local.*
+
+
+# -----------------------------------------------------------------------------
+# Windows System Files
+# -----------------------------------------------------------------------------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+
+# -----------------------------------------------------------------------------
+# macOS Files
+# -----------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+
+# -----------------------------------------------------------------------------
+# Linux Files
+# -----------------------------------------------------------------------------
+*~
+.fuse_hidden*
+.Trash-*
+.nfs*
+
+
+# -----------------------------------------------------------------------------
+# Editor & IDE Files
+# -----------------------------------------------------------------------------
+# VS Code — personal settings ignored, shared workspace configs preserved
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Cursor / Windsurf / other AI-assisted editors
+.cursor/
+.windsurf/
+
+# Notepad++ backup files
+*.bak
+
+# Vim swap files, in case of cross-platform editing
+*.swp
+*.swo
+
+
+# -----------------------------------------------------------------------------
+# PowerShell
+# -----------------------------------------------------------------------------
+# Module build output and packaged artifacts
+Output/
+Release/
+*.nupkg
+
+# PowerShell transcripts and history
+PowerShell_transcript.*
+*.psc1
+ConsoleHost_history.txt
+
+# PSScriptAnalyzer cache and local profiling output
+PSScriptAnalyzerSettings.cache
+*.ps1.cache
+
+# Module manifests generated during build, when applicable
+*.psd1.bak
+
+# Pester test results
+TestResults.xml
+coverage.xml
+
+
+# -----------------------------------------------------------------------------
+# HTML / Web Assets
+# -----------------------------------------------------------------------------
+# Generated or minified output, if a build step is introduced later
+*.min.html.map
+*.min.css.map
+*.min.js.map
+
+# Local server-config overrides
+.htaccess.local
+web.config.local
+
+
+# -----------------------------------------------------------------------------
+# Logs & Temporary Files
+# -----------------------------------------------------------------------------
+*.log
+logs/
+*.tmp
+*.temp
+*.backup
+*.old
+*.orig
+
+
+# -----------------------------------------------------------------------------
+# Cache Folders
+# -----------------------------------------------------------------------------
+.cache/
+.tmp/
+
+
+# -----------------------------------------------------------------------------
+# Archives — rarely belong in source control
+# -----------------------------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+
+# -----------------------------------------------------------------------------
+# Local Notes & Scratch Work
+# -----------------------------------------------------------------------------
+# Filenames following these patterns stay on the local machine only.
+TODO.local.md
+NOTES.local.md
+scratch/
+playground/
+*.local
